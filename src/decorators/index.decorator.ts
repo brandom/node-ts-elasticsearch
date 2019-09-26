@@ -20,15 +20,10 @@ export function Index(pathOrOptions?: string | IIndexOptions, indexOptions?: IIn
    */
   return <T extends AnyClass>(target: T): T => {
     const options: IIndexOptions = (pathOrOptions && typeof pathOrOptions === 'object' ? pathOrOptions : indexOptions) || {};
-    const name: string = (typeof pathOrOptions === 'string' ? pathOrOptions : options.index) || target.name;
-    const parts = name.split('/');
-    const index = parts.shift() || '';
-    const type = parts.shift() || options.type || index;
+    const index: string = (typeof pathOrOptions === 'string' ? pathOrOptions : options.index) || target.name;
     const meta = Reflect.getMetadata(DECORATORS.INDEX, target) || {};
-    if (!index) {
-      throw new Error('Index undefined');
-    }
-    Reflect.defineMetadata(DECORATORS.INDEX, { ...meta, index: index.toLowerCase(), type: type.toLowerCase(), settings: options.settings }, target);
+
+    Reflect.defineMetadata(DECORATORS.INDEX, { ...meta, index: index.toLowerCase(), settings: options.settings }, target);
     IndexStore.add(target);
     return target;
   };

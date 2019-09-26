@@ -3,6 +3,7 @@ import { Index } from '../decorators/index.decorator';
 import { IndexedIndicesFlushParams, Indices } from './indices';
 import { getIndexMetadata, getPropertiesMetadata } from './metadata-handler';
 import { getPureMapping } from './tools';
+
 import Mock = jest.Mock;
 
 jest.mock('./metadata-handler');
@@ -40,7 +41,7 @@ describe('create', () => {
     const indices = new Indices(client as any, options);
     await indices.create(Twitter);
     expect(getIndexMetadata).toHaveBeenCalledWith(options, Twitter);
-    expect(client.indices.create).toHaveBeenCalledWith({ index: 'a_index', body: { any: 'thing' } });
+    expect(client.indices.create).toHaveBeenCalledWith({ index: 'a_index', body: { settings: { index: { any: 'thing' } } } });
   });
 });
 
@@ -80,10 +81,10 @@ describe('flush', () => {
   });
 
   it('flushes using custom params', async () => {
-    const params: IndexedIndicesFlushParams = { body: { query: { match_all: {} } } };
+    const params: IndexedIndicesFlushParams = { ignore_unavailable: true };
     await indices.flush(Twitter, params);
     expect(getIndexMetadata).toHaveBeenCalledWith(options, Twitter);
-    expect(client.indices.flush).toHaveBeenCalledWith({ index: 'a_index', body: { query: { match_all: {} } } });
+    expect(client.indices.flush).toHaveBeenCalledWith({ index: 'a_index', ignore_unavailable: true });
   });
 
   it('returns the client result', async () => {
@@ -110,7 +111,7 @@ describe('putMapping', () => {
     expect(getIndexMetadata).toHaveBeenCalledWith(options, Twitter);
     expect(getPropertiesMetadata).toHaveBeenCalledWith(Twitter);
     expect(getPureMapping).toHaveBeenCalledWith(fieldsMetadata);
-    expect(client.indices.putMapping).toHaveBeenCalledWith({ index: 'a_index', type: 'a_type', body: { dynamic: 'strict', properties } });
+    expect(client.indices.putMapping).toHaveBeenCalledWith({ index: 'a_index', body: { dynamic: 'strict', properties } });
   });
 });
 

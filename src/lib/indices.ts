@@ -1,10 +1,11 @@
-import { Client, IndicesFlushParams } from 'elasticsearch';
-import { Indexed, IndexedClass } from '../types';
+import { Client, RequestParams } from '@elastic/elasticsearch';
+
+import { IndexedClass } from '../types';
 import { ICoreOptions } from './core';
 import { getIndexMetadata, getPropertiesMetadata } from './metadata-handler';
 import { getPureMapping } from './tools';
 
-export type IndexedIndicesFlushParams = Indexed<IndicesFlushParams>;
+export type IndexedIndicesFlushParams = RequestParams.IndicesFlush;
 
 export class Indices {
   constructor(private readonly client: Client, private readonly options: ICoreOptions) {}
@@ -14,7 +15,7 @@ export class Indices {
    */
   async create<T>(cls: IndexedClass<T>): Promise<any> {
     const metadata = getIndexMetadata(this.options, cls);
-    return await this.client.indices.create({ index: metadata.index, body: metadata.settings });
+    return await this.client.indices.create({ index: metadata.index, body: { settings: { index: metadata.settings } } });
   }
 
   /**
@@ -30,7 +31,7 @@ export class Indices {
    */
   async exists<T>(cls: IndexedClass<T>): Promise<boolean> {
     const metadata = getIndexMetadata(this.options, cls);
-    return await this.client.indices.exists({ index: metadata.index });
+    return ((await this.client.indices.exists({ index: metadata.index })) as unknown) as boolean;
   }
 
   /**
@@ -38,7 +39,7 @@ export class Indices {
    */
   flush<T>(cls: IndexedClass<T>, params?: IndexedIndicesFlushParams): Promise<any> {
     const metadata = getIndexMetadata(this.options, cls);
-    const flushParams: IndicesFlushParams = { index: metadata.index, ...params };
+    const flushParams: RequestParams.IndicesFlush = { index: metadata.index, ...params };
     return this.client.indices.flush(flushParams);
   }
 
@@ -50,7 +51,6 @@ export class Indices {
     const fieldsMetadata = getPropertiesMetadata(cls);
     return await this.client.indices.putMapping({
       index: metadata.index,
-      type: metadata.type,
       body: {
         dynamic: 'strict',
         properties: getPureMapping(fieldsMetadata),

@@ -1,7 +1,7 @@
 import { DECORATORS } from '../constants';
 import { IndexedClass } from '../types';
 
-export type StringType = 'text' | 'keyword';
+export type StringType = 'text' | 'keyword' | 'search_as_you_type';
 export type NumericType = 'long' | 'integer' | 'short' | 'byte' | 'double' | 'float' | 'half_float' | 'scaled_float';
 export type DateType = 'date';
 export type BooleanType = 'boolean';
@@ -94,6 +94,15 @@ export interface IESFieldOptions {
   };
   properties?: IPropertiesMetadata;
 }
+
+export type FieldOptions =
+  | IDisabledFieldOptions
+  | IFieldOptions
+  | IStringFieldOptions
+  | IDateFieldOptions
+  | IObjectOptions
+  | INestedOptions
+  | IStringFieldOptions;
 
 export interface IFieldStructure extends IESFieldOptions {
   _cls?: IndexedClass<any>;

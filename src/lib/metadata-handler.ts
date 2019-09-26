@@ -1,11 +1,10 @@
-import { IPropertiesMetadata } from '..';
+import { IPropertiesMetadata } from '../';
 import { DECORATORS } from '../constants';
 import { IndexedClass } from '../types';
 import { ICoreOptions } from './core';
 
 export interface IndexMetadata {
   index: string;
-  type: string;
   primary?: string;
   settings?: any;
 }

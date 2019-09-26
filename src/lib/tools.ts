@@ -61,7 +61,6 @@ export interface IQueryStructure<T> {
   document?: Partial<T>;
   id: string;
   index: string;
-  type: string;
 }
 
 /**
@@ -102,7 +101,7 @@ export function getQueryStructure<T>(
     id = getId(coreOptions, cls, document);
   }
 
-  return { cls, document, id: id || '', index: metadata.index, type: metadata.type };
+  return { cls, document, id: id || '', index: metadata.index };
 }
 
 /**
@@ -117,7 +116,7 @@ export function buildBulkQuery<T>(coreOptions: ICoreOptions, action: 'index', cl
   const body: any[] = [];
 
   documents.forEach((document: Partial<T>) => {
-    const description: any = { _index: metadata.index, _type: metadata.type };
+    const description: any = { _index: metadata.index };
     if (metadata.primary && (document as any)[metadata.primary]) {
       description._id = (document as any)[metadata.primary];
     }

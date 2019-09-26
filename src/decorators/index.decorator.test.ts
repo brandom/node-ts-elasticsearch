@@ -3,28 +3,20 @@ import { IndexStore } from '../lib/index-store';
 import { Index } from './index.decorator';
 
 describe('pathOrOptions as string', () => {
-  it('uses class name as index and type', () => {
+  it('uses class name as index', () => {
     @Index()
     class Tweet {}
 
     const index = Reflect.getMetadata(DECORATORS.INDEX, Tweet);
-    expect(index).toEqual({ index: 'tweet', type: 'tweet' });
+    expect(index).toEqual({ index: 'tweet' });
   });
 
-  it('uses explicit index and type in lower case', () => {
-    @Index('TweeTer/Twt')
+  it('uses explicit index in lower case', () => {
+    @Index('TweeTer')
     class Tweet {}
 
     const index = Reflect.getMetadata(DECORATORS.INDEX, Tweet);
-    expect(index).toEqual({ index: 'tweeter', type: 'twt' });
-  });
-
-  it('uses explicit index and implicit type', () => {
-    @Index('twt')
-    class Tweet {}
-
-    const index = Reflect.getMetadata(DECORATORS.INDEX, Tweet);
-    expect(index).toEqual({ index: 'twt', type: 'twt' });
+    expect(index).toEqual({ index: 'tweeter' });
   });
 
   it('uses explicit index and options settings', () => {
@@ -32,13 +24,12 @@ describe('pathOrOptions as string', () => {
       number_of_shards: 3,
     };
 
-    @Index('tweeter/twt', { settings })
+    @Index('tweeter', { settings })
     class Tweet {}
 
     const index = Reflect.getMetadata(DECORATORS.INDEX, Tweet);
     expect(index).toEqual({
       index: 'tweeter',
-      type: 'twt',
       settings: {
         number_of_shards: 3,
       },
@@ -58,7 +49,6 @@ describe('only options object', () => {
     const index = Reflect.getMetadata(DECORATORS.INDEX, Tweet);
     expect(index).toEqual({
       index: 'tweet',
-      type: 'tweet',
       settings: {
         number_of_shards: 3,
       },
@@ -70,31 +60,12 @@ describe('only options object', () => {
       number_of_shards: 3,
     };
 
-    @Index({ index: 'twitter', type: 'twt', settings })
+    @Index({ index: 'twitter', settings })
     class Tweet {}
 
     const index = Reflect.getMetadata(DECORATORS.INDEX, Tweet);
     expect(index).toEqual({
       index: 'twitter',
-      type: 'twt',
-      settings: {
-        number_of_shards: 3,
-      },
-    });
-  });
-
-  it('uses explicit index ans implicit type', () => {
-    const settings = {
-      number_of_shards: 3,
-    };
-
-    @Index({ index: 'twt', settings })
-    class Tweet {}
-
-    const index = Reflect.getMetadata(DECORATORS.INDEX, Tweet);
-    expect(index).toEqual({
-      index: 'twt',
-      type: 'twt',
       settings: {
         number_of_shards: 3,
       },
@@ -103,13 +74,6 @@ describe('only options object', () => {
 });
 
 describe('@index', () => {
-  it('throw if index is missing', () => {
-    expect(() => {
-      @Index('/type')
-      class Tweet {}
-    }).toThrow('Index undefined');
-  });
-
   it('store the class in the IndexStore', () => {
     const spy = jest.spyOn(IndexStore, 'add');
 
