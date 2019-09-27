@@ -9,7 +9,7 @@ it('define primary key', () => {
   }
 
   const index = Reflect.getMetadata(DECORATORS.INDEX, Tweet);
-  expect(index).toEqual({ index: 'tweet', type: 'tweet', primary: 'id' });
+  expect(index).toEqual({ index: 'tweet', primary: 'id' });
 });
 
 it('throw when defining multiple primaries keys', () => {

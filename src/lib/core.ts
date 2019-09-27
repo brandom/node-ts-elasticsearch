@@ -1,5 +1,7 @@
-import { Client, CountParams, CountResponse, GetParams, GetResponse, ScrollParams, SearchParams, SearchResponse } from 'elasticsearch';
+import { CountResponse, GetResponse, SearchResponse } from 'elasticsearch';
 import { Readable } from 'stream';
+
+import { ApiResponse, Client, RequestParams } from '@elastic/elasticsearch';
 
 import { AnyClass, Indexed, IndexedClass } from '../types';
 import { ArrayStream } from './array-stream';
@@ -7,9 +9,9 @@ import { IndexStore } from './index-store';
 import { getIndexMetadata } from './metadata-handler';
 import { buildBulkQuery, getQueryStructure, instantiateResult } from './tools';
 
-export type IndexedGetParams = Indexed<GetParams>;
-export type IndexedSearchParams = Indexed<SearchParams>;
-export type IndexedCountParams = Indexed<CountParams>;
+export type IndexedGetParams = Indexed<RequestParams.Get>;
+export type IndexedSearchParams = Indexed<RequestParams.Search>;
+export type IndexedCountParams = Indexed<RequestParams.Count>;
 
 export const DEFAULT_BULK_SIZE = 100;
 
@@ -29,7 +31,7 @@ export class Core {
   /**
    * Close the connection
    */
-  close(): void {
+  close(): void | Promise<void> {
     return this.client.close();
   }
 
@@ -90,13 +92,13 @@ export class Core {
    * Get the number of documents for the cluster, index, type, or a query
    * @param clsOrParams
    */
-  count<T>(clsOrParams: CountParams): Promise<CountResponse>;
-  count<T>(clsOrParams: IndexedClass<T>, countParams?: IndexedCountParams): Promise<CountResponse>;
-  count<T>(clsOrParams: IndexedClass<T> | CountParams, countParams?: IndexedCountParams): Promise<CountResponse> {
-    let params: CountParams;
+  count<T>(clsOrParams: RequestParams.Count): Promise<ApiResponse<CountResponse>>;
+  count<T>(clsOrParams: IndexedClass<T>, countParams?: RequestParams.Count): Promise<ApiResponse<CountResponse>>;
+  count<T>(clsOrParams: IndexedClass<T> | RequestParams.Count, countParams?: RequestParams.Count): Promise<ApiResponse<CountResponse>> {
+    let params: RequestParams.Count;
     if (typeof clsOrParams === 'function') {
       const metadata = getIndexMetadata(this.options, clsOrParams);
-      params = { index: metadata.index, type: metadata.type, ...countParams };
+      params = { index: metadata.index, ...countParams };
     } else {
       params = { ...clsOrParams };
     }
@@ -126,7 +128,6 @@ export class Core {
 
     return this.client.create({
       index: params.index,
-      type: params.type,
       id: params.id,
       body: params.document,
     });
@@ -146,7 +147,6 @@ export class Core {
 
     return this.client.delete({
       index: params.index,
-      type: params.type,
       id: params.id,
     });
   }
@@ -156,11 +156,14 @@ export class Core {
    * @param cls
    * @param idOrParams
    */
-  async get<T>(cls: IndexedClass<T>, idOrParams: string | IndexedGetParams): Promise<{ response: GetResponse<T>; document: T }> {
+  async get<T>(cls: IndexedClass<T>, idOrParams: string | IndexedGetParams): Promise<{ response: ApiResponse<GetResponse<T>>; document: T }> {
     const metadata = getIndexMetadata(this.options, cls);
-    const params: GetParams = { index: metadata.index, type: metadata.type, ...(typeof idOrParams === 'string' ? { id: idOrParams } : idOrParams) };
-    const response = await this.client.get<T>(params);
-    const document = instantiateResult(cls, response._source);
+    const params: RequestParams.Get = {
+      index: metadata.index,
+      ...(typeof idOrParams === 'string' ? { id: idOrParams } : idOrParams),
+    };
+    const response = await this.client.get(params);
+    const document = response.body ? instantiateResult(cls, response.body._source) : instantiateResult(cls, {});
     return { response, document };
   }
 
@@ -187,7 +190,6 @@ export class Core {
 
     return this.client.index({
       index: params.index,
-      type: params.type,
       id: params.id,
       body: params.document,
     });
@@ -199,9 +201,9 @@ export class Core {
    * @param cls
    * @param params
    */
-  async scroll<T>(cls: IndexedClass<T>, params: ScrollParams): Promise<{ response: SearchResponse<T>; documents: T[] }> {
-    const response = await this.client.scroll<T>(params);
-    const documents = response.hits.hits.map(hit => instantiateResult(cls, hit._source));
+  async scroll<T>(cls: IndexedClass<T>, params: RequestParams.Scroll): Promise<{ response: ApiResponse<SearchResponse<T>>; documents: T[] }> {
+    const response = await this.client.scroll(params);
+    const documents = response.body.hits.hits.map((hit: any) => instantiateResult(cls, hit._source));
     return { response, documents };
   }
 
@@ -211,10 +213,10 @@ export class Core {
    * @param cls
    * @param params
    */
-  async search<T>(cls: IndexedClass<T>, params: IndexedSearchParams): Promise<{ response: SearchResponse<T>; documents: T[] }> {
+  async search<T>(cls: IndexedClass<T>, params: IndexedSearchParams): Promise<{ response: ApiResponse<SearchResponse<T>>; documents: T[] }> {
     const metadata = getIndexMetadata(this.options, cls);
-    const response = await this.client.search<T>({ index: metadata.index, type: metadata.type, ...params });
-    const documents = response.hits.hits.map(hit => instantiateResult(cls, hit._source));
+    const response = await this.client.search({ index: metadata.index, ...params });
+    const documents = response.body.hits.hits.map((hit: any) => instantiateResult(cls, hit._source));
     return { response, documents };
   }
 
@@ -245,7 +247,6 @@ export class Core {
 
     return this.client.update({
       index: params.index,
-      type: params.type,
       id: params.id,
       body: { doc: params.document },
     });

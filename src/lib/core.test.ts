@@ -1,18 +1,20 @@
-import * as es from 'elasticsearch';
 import { Readable } from 'stream';
-import Mock = jest.Mock;
+
+import { Client } from '@elastic/elasticsearch';
 
 import { Field, Index, Primary } from '../';
 import { Core, DEFAULT_BULK_SIZE, ICoreOptions } from './core';
 import { IndexStore } from './index-store';
 import { deepFreeze } from './testing-tools.test';
-
 import * as tools from './tools';
+
+import Mock = jest.Mock;
+
 jest.mock('./tools');
 
 beforeEach(() => jest.clearAllMocks());
 
-let client: es.Client;
+let client: Client;
 let core: Core;
 let coreOptions: ICoreOptions;
 
@@ -33,7 +35,7 @@ class Lambda {
 
 beforeEach(() => {
   coreOptions = { indexPrefix: 'es1_' };
-  client = {} as es.Client;
+  client = {} as Client;
   core = new Core(client, coreOptions);
 });
 
@@ -205,13 +207,13 @@ describe('count', () => {
   it('calls client.count', async () => {
     await core.count(User);
     expect(client.count).toHaveBeenCalledTimes(1);
-    expect(client.count).toHaveBeenCalledWith({ index: 'es1_user', type: 'user' });
+    expect(client.count).toHaveBeenCalledWith({ index: 'es1_user' });
   });
 
   it('mixes class and query', async () => {
     await core.count(User, { body: { query: { match_all: {} } } });
     expect(client.count).toHaveBeenCalledTimes(1);
-    expect(client.count).toHaveBeenCalledWith({ index: 'es1_user', type: 'user', body: { query: { match_all: {} } } });
+    expect(client.count).toHaveBeenCalledWith({ index: 'es1_user', body: { query: { match_all: {} } } });
   });
 
   it('handle original query', async () => {
@@ -233,16 +235,16 @@ describe('create', () => {
 
   it('calls client.create', async () => {
     const user = {};
-    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', type: 'tp', id: '123', cls: User, document: { name: 'Bob' } });
+    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', id: '123', cls: User, document: { name: 'Bob' } });
     await core.create(User, 'xyz', user);
     expect(tools.getQueryStructure).toHaveBeenCalledTimes(1);
     expect(tools.getQueryStructure).toHaveBeenCalledWith(coreOptions, User, 'xyz', user);
     expect(client.create).toHaveBeenCalledTimes(1);
-    expect(client.create).toHaveBeenCalledWith({ index: 'idx', type: 'tp', id: '123', body: { name: 'Bob' } });
+    expect(client.create).toHaveBeenCalledWith({ index: 'idx', id: '123', body: { name: 'Bob' } });
   });
 
   it('throws when document is missing', async () => {
-    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', type: 'tp', id: '123', document: undefined });
+    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', id: '123', document: undefined });
     expect.assertions(1);
     try {
       await core.create(User);
@@ -256,16 +258,16 @@ describe('delete', () => {
   beforeEach(() => (client.delete = jest.fn()));
 
   it('calls client.delete', async () => {
-    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', type: 'tp', id: '123', cls: User });
+    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', id: '123', cls: User });
     await core.delete(User, 'xyz');
     expect(tools.getQueryStructure).toHaveBeenCalledTimes(1);
     expect(tools.getQueryStructure).toHaveBeenCalledWith(coreOptions, User, 'xyz');
     expect(client.delete).toHaveBeenCalledTimes(1);
-    expect(client.delete).toHaveBeenCalledWith({ index: 'idx', type: 'tp', id: '123' });
+    expect(client.delete).toHaveBeenCalledWith({ index: 'idx', id: '123' });
   });
 
   it('throws when id is missing', async () => {
-    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', type: 'tp', id: '', cls: User });
+    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', id: '', cls: User });
     expect.assertions(1);
     try {
       await core.delete(User);
@@ -288,7 +290,7 @@ describe('get', () => {
 
   it('return an instance from an id', async () => {
     const user = new User();
-    const response: any = deepFreeze({ _source: { user_id: '1234', name: 'Bob', age: 13 } });
+    const response: any = deepFreeze({ body: { _source: { user_id: '1234', name: 'Bob', age: 13 } } });
     client.get = jest.fn().mockReturnValue(response);
     (tools.instantiateResult as Mock).mockReturnValue(user);
 
@@ -297,13 +299,13 @@ describe('get', () => {
     expect(result.document).toBe(user);
 
     expect(client.get).toHaveBeenCalledTimes(1);
-    expect(client.get).toHaveBeenCalledWith({ index: 'es1_user', type: 'user', id: '1234' });
+    expect(client.get).toHaveBeenCalledWith({ index: 'es1_user', id: '1234' });
     expect(tools.instantiateResult).toHaveBeenCalledTimes(1);
-    expect(tools.instantiateResult).toHaveBeenCalledWith(User, response._source);
+    expect(tools.instantiateResult).toHaveBeenCalledWith(User, response.body._source);
   });
 
   it('should handle not found', async () => {
-    const response: any = { found: false };
+    const response: any = { body: { found: false } };
     client.get = jest.fn().mockReturnValue(response);
     const result = await core.get(User, '1234');
     expect(result.response).toBe(response);
@@ -311,9 +313,11 @@ describe('get', () => {
   });
 
   it('handle complex query', async () => {
+    // const response: any = { body: { found: false } };
+    // client.get = jest.fn().mockReturnValue(response);
     await core.get(User, { id: '456', ignore: 404 });
     expect(client.get).toHaveBeenCalledTimes(1);
-    expect(client.get).toHaveBeenCalledWith({ index: 'es1_user', type: 'user', id: '456', ignore: 404 });
+    expect(client.get).toHaveBeenCalledWith({ index: 'es1_user', id: '456', ignore: 404 });
   });
 });
 
@@ -335,16 +339,16 @@ describe('index', () => {
 
   it('calls client.index', async () => {
     const user = {};
-    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', type: 'tp', id: '123', cls: User, document: { name: 'Bob' } });
+    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', id: '123', cls: User, document: { name: 'Bob' } });
     await core.index(User, 'xyz', user);
     expect(tools.getQueryStructure).toHaveBeenCalledTimes(1);
     expect(tools.getQueryStructure).toHaveBeenCalledWith(coreOptions, User, 'xyz', user);
     expect(client.index).toHaveBeenCalledTimes(1);
-    expect(client.index).toHaveBeenCalledWith({ index: 'idx', type: 'tp', id: '123', body: { name: 'Bob' } });
+    expect(client.index).toHaveBeenCalledWith({ index: 'idx', id: '123', body: { name: 'Bob' } });
   });
 
   it('throws when document is missing', async () => {
-    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', type: 'tp', id: '123', document: undefined });
+    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', id: '123', document: undefined });
     expect.assertions(1);
     try {
       await core.index(User);
@@ -356,7 +360,7 @@ describe('index', () => {
 
 describe('scroll', () => {
   beforeEach(() => {
-    client.scroll = jest.fn().mockReturnValue({ hits: { hits: [] } });
+    client.scroll = jest.fn().mockReturnValue({ body: { hits: { hits: [] } } });
     // simple assign, does not create nested objects
     (tools.instantiateResult as Mock).mockImplementation((cls: any, source: any) => {
       if (source) {
@@ -367,8 +371,10 @@ describe('scroll', () => {
 
   it('returns instances', async () => {
     const response: any = deepFreeze({
-      hits: {
-        hits: [{ _source: { user_id: '123', name: 'Bob', age: 13 } }, { _source: { user_id: '456', name: 'Tom', age: 14 } }],
+      body: {
+        hits: {
+          hits: [{ _source: { user_id: '123', name: 'Bob', age: 13 } }, { _source: { user_id: '456', name: 'Tom', age: 14 } }],
+        },
       },
     });
     const params: any = deepFreeze({ scrollId: '123', scroll: '30s' });
@@ -389,14 +395,14 @@ describe('scroll', () => {
   });
 
   it('should handle empty result', async () => {
-    const result = await core.scroll(User, { scrollId: '123', scroll: '30s' });
+    const result = await core.scroll(User, { scroll_id: '123', scroll: '30s' });
     expect(result.documents).toEqual([]);
   });
 });
 
 describe('search', () => {
   beforeEach(() => {
-    client.search = jest.fn().mockReturnValue({ hits: { hits: [] } });
+    client.search = jest.fn().mockReturnValue({ body: { hits: { hits: [] } } });
     // simple assign, does not create nested objects
     (tools.instantiateResult as Mock).mockImplementation((cls: any, source: any) => {
       if (source) {
@@ -407,8 +413,10 @@ describe('search', () => {
 
   it('returns instances', async () => {
     const response: any = deepFreeze({
-      hits: {
-        hits: [{ _source: { user_id: '123', name: 'Bob', age: 13 } }, { _source: { user_id: '456', name: 'Tom', age: 14 } }],
+      body: {
+        hits: {
+          hits: [{ _source: { user_id: '123', name: 'Bob', age: 13 } }, { _source: { user_id: '456', name: 'Tom', age: 14 } }],
+        },
       },
     });
     const query: any = deepFreeze({ body: { query: { match_all: {} } } });
@@ -422,7 +430,7 @@ describe('search', () => {
     expect(result.documents[0]).toBeInstanceOf(User);
     expect(result.documents[1]).toBeInstanceOf(User);
     expect(client.search).toHaveBeenCalledTimes(1);
-    expect(client.search).toHaveBeenCalledWith({ index: 'es1_user', type: 'user', ...query });
+    expect(client.search).toHaveBeenCalledWith({ index: 'es1_user', ...query });
     expect(tools.instantiateResult).toHaveBeenCalledTimes(2);
     expect(tools.instantiateResult).toHaveBeenCalledWith(User, { user_id: '123', name: 'Bob', age: 13 });
     expect(tools.instantiateResult).toHaveBeenCalledWith(User, { user_id: '456', name: 'Tom', age: 14 });
@@ -439,16 +447,16 @@ describe('update', () => {
 
   it('calls client.update', async () => {
     const user = {};
-    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', type: 'tp', id: '123', cls: User, document: { name: 'Bob' } });
+    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', id: '123', cls: User, document: { name: 'Bob' } });
     await core.update(User, 'xyz', user);
     expect(tools.getQueryStructure).toHaveBeenCalledTimes(1);
     expect(tools.getQueryStructure).toHaveBeenCalledWith(coreOptions, User, 'xyz', user);
     expect(client.update).toHaveBeenCalledTimes(1);
-    expect(client.update).toHaveBeenCalledWith({ index: 'idx', type: 'tp', id: '123', body: { doc: { name: 'Bob' } } });
+    expect(client.update).toHaveBeenCalledWith({ index: 'idx', id: '123', body: { doc: { name: 'Bob' } } });
   });
 
   it('throws when document is missing', async () => {
-    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', type: 'tp', id: '123', cls: User, document: undefined });
+    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', id: '123', cls: User, document: undefined });
     expect.assertions(1);
     try {
       await core.update(User);
@@ -458,7 +466,7 @@ describe('update', () => {
   });
 
   it('throws when id is missing', async () => {
-    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', type: 'tp', id: '', cls: User, document: {} });
+    (tools.getQueryStructure as Mock).mockReturnValue({ index: 'idx', id: '', cls: User, document: {} });
     expect.assertions(1);
     try {
       await core.update(User);

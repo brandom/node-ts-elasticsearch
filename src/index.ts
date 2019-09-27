@@ -1,4 +1,4 @@
-export { Client } from 'elasticsearch';
+export { Client } from '@elastic/elasticsearch';
 
 export * from './lib/elasticsearch';
 export * from './decorators/index.decorator';

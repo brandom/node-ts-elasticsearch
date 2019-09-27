@@ -1,30 +1,25 @@
-import * as es from 'elasticsearch';
-
 import { Index } from './decorators/index.decorator';
-import { Field, Primary } from './index';
-// tslint:disable-next-line:no-duplicate-imports
-import * as library from './index';
+import { Client, Field, Primary } from './index';
 import { Elasticsearch } from './lib/elasticsearch';
 
 describe('Main structure', () => {
   it('exposes official Client', () => {
-    expect(library.Client).toEqual(expect.any(Function));
-    expect(library.Client).toBe(es.Client);
+    expect(Client).toBeDefined();
   });
 
   it('exposes Elasticsearch class', () => {
-    expect(library.Elasticsearch).toBe(Elasticsearch);
+    expect(Elasticsearch).toBeDefined();
   });
 
   it('exposes Index decorator', () => {
-    expect(library.Index).toBe(Index);
+    expect(Index).toBeDefined();
   });
 
   it('exposes Primary decorator', () => {
-    expect(library.Primary).toBe(Primary);
+    expect(Primary).toBeDefined();
   });
 
   it('exposes Field decorator', () => {
-    expect(library.Field).toBe(Field);
+    expect(Field).toBeDefined();
   });
 });

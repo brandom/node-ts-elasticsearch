@@ -220,7 +220,7 @@ describe('getQueryStructure', () => {
   describe('Primary key based class', () => {
     beforeEach(() => {
       options = { indexPrefix: 'es1_' };
-      (getIndexMetadata as Mock).mockReturnValue({ index: 'a_index', type: 'a_type', primary: 'id' });
+      (getIndexMetadata as Mock).mockReturnValue({ index: 'a_index', primary: 'id' });
       (getId as Mock).mockReturnValue('123');
     });
 
@@ -228,7 +228,7 @@ describe('getQueryStructure', () => {
       const user = new User();
       user.id = '1';
       const query = getQueryStructure(options, user);
-      expect(query).toEqual({ cls: User, document: user, id: '123', index: 'a_index', type: 'a_type' });
+      expect(query).toEqual({ cls: User, document: user, id: '123', index: 'a_index' });
       expect(getIndexMetadata).toHaveBeenCalledWith(options, User);
       expect(getId).toHaveBeenCalledWith(options, User, user);
     });
@@ -236,7 +236,7 @@ describe('getQueryStructure', () => {
     it('handles literal', () => {
       const user: User = { id: '1', name: 'Bob' };
       const query = getQueryStructure(options, User, user);
-      expect(query).toEqual({ cls: User, document: user, id: '123', index: 'a_index', type: 'a_type' });
+      expect(query).toEqual({ cls: User, document: user, id: '123', index: 'a_index' });
       expect(getIndexMetadata).toHaveBeenCalledWith(options, User);
       expect(getId).toHaveBeenCalledWith(options, User, user);
     });
@@ -244,21 +244,21 @@ describe('getQueryStructure', () => {
     it('handles partial', () => {
       const user: Partial<User> = { name: 'Bob' };
       const query = getQueryStructure(options, User, '123', user);
-      expect(query).toEqual({ cls: User, document: user, id: '123', index: 'a_index', type: 'a_type' });
+      expect(query).toEqual({ cls: User, document: user, id: '123', index: 'a_index' });
       expect(getIndexMetadata).toHaveBeenCalledWith(options, User);
       expect(getId).not.toHaveBeenCalled();
     });
 
     it('handles only class', () => {
       const query = getQueryStructure(options, User);
-      expect(query).toEqual({ cls: User, document: undefined, id: '', index: 'a_index', type: 'a_type' });
+      expect(query).toEqual({ cls: User, document: undefined, id: '', index: 'a_index' });
       expect(getIndexMetadata).toHaveBeenCalledWith(options, User);
       expect(getId).not.toHaveBeenCalled();
     });
 
     it('handles class and id', () => {
       const query = getQueryStructure(options, User, '123');
-      expect(query).toEqual({ cls: User, document: undefined, id: '123', index: 'a_index', type: 'a_type' });
+      expect(query).toEqual({ cls: User, document: undefined, id: '123', index: 'a_index' });
       expect(getIndexMetadata).toHaveBeenCalledWith(options, User);
       expect(getId).not.toHaveBeenCalled();
     });
@@ -267,7 +267,7 @@ describe('getQueryStructure', () => {
       (getId as Mock).mockReturnValue('');
       const user: Partial<User> = { name: 'Bob' };
       const query = getQueryStructure(options, User, '', user);
-      expect(query).toEqual({ cls: User, document: user, id: '', index: 'a_index', type: 'a_type' });
+      expect(query).toEqual({ cls: User, document: user, id: '', index: 'a_index' });
       expect(getIndexMetadata).toHaveBeenCalledWith(options, User);
       expect(getId).toHaveBeenCalledWith(options, User, user);
     });
@@ -276,13 +276,13 @@ describe('getQueryStructure', () => {
   describe('Non primary key based class', () => {
     beforeEach(() => {
       options = { indexPrefix: 'es1_' };
-      (getIndexMetadata as Mock).mockReturnValue({ index: 'a_index', type: 'a_type' });
+      (getIndexMetadata as Mock).mockReturnValue({ index: 'a_index' });
     });
 
     it('handles instance', () => {
       const user = new User();
       const query = getQueryStructure(options, user);
-      expect(query).toEqual({ cls: User, document: user, id: '', index: 'a_index', type: 'a_type' });
+      expect(query).toEqual({ cls: User, document: user, id: '', index: 'a_index' });
       expect(getIndexMetadata).toHaveBeenCalledWith(options, User);
       expect(getId).not.toHaveBeenCalled();
     });
@@ -290,7 +290,7 @@ describe('getQueryStructure', () => {
     it('handles literal', () => {
       const user: User = { name: 'Bob' };
       const query = getQueryStructure(options, User, user);
-      expect(query).toEqual({ cls: User, document: user, id: '', index: 'a_index', type: 'a_type' });
+      expect(query).toEqual({ cls: User, document: user, id: '', index: 'a_index' });
       expect(getIndexMetadata).toHaveBeenCalledWith(options, User);
       expect(getId).not.toHaveBeenCalled();
     });
@@ -298,21 +298,21 @@ describe('getQueryStructure', () => {
     it('handles partial', () => {
       const user: Partial<User> = { name: 'Bob' };
       const query = getQueryStructure(options, User, '123', user);
-      expect(query).toEqual({ cls: User, document: user, id: '123', index: 'a_index', type: 'a_type' });
+      expect(query).toEqual({ cls: User, document: user, id: '123', index: 'a_index' });
       expect(getIndexMetadata).toHaveBeenCalledWith(options, User);
       expect(getId).not.toHaveBeenCalled();
     });
 
     it('handles only class', () => {
       const query = getQueryStructure(options, User);
-      expect(query).toEqual({ cls: User, document: undefined, id: '', index: 'a_index', type: 'a_type' });
+      expect(query).toEqual({ cls: User, document: undefined, id: '', index: 'a_index' });
       expect(getIndexMetadata).toHaveBeenCalledWith(options, User);
       expect(getId).not.toHaveBeenCalled();
     });
 
     it('handles class and id', () => {
       const query = getQueryStructure(options, User, '123');
-      expect(query).toEqual({ cls: User, document: undefined, id: '123', index: 'a_index', type: 'a_type' });
+      expect(query).toEqual({ cls: User, document: undefined, id: '123', index: 'a_index' });
       expect(getIndexMetadata).toHaveBeenCalledWith(options, User);
       expect(getId).not.toHaveBeenCalled();
     });
@@ -320,7 +320,7 @@ describe('getQueryStructure', () => {
     it('handles missing id', () => {
       const user: Partial<User> = { name: 'Bob' };
       const query = getQueryStructure(options, User, '', user);
-      expect(query).toEqual({ cls: User, document: user, id: '', index: 'a_index', type: 'a_type' });
+      expect(query).toEqual({ cls: User, document: user, id: '', index: 'a_index' });
       expect(getIndexMetadata).toHaveBeenCalledWith(options, User);
       expect(getId).not.toHaveBeenCalled();
     });
@@ -335,16 +335,16 @@ describe('buildBulkQuery', () => {
 
   describe('Primary key based class', () => {
     beforeEach(() => {
-      (getIndexMetadata as Mock).mockReturnValue({ index: 'a_index', type: 'a_type', primary: 'id' });
+      (getIndexMetadata as Mock).mockReturnValue({ index: 'a_index', primary: 'id' });
     });
 
     it('build index query', () => {
       const query = buildBulkQuery(options, 'index', User, [{ id: '123', name: 'Bob' }, { id: '124', name: 'Tom' }]);
       expect(query).toEqual({
         body: [
-          { index: { _index: 'a_index', _type: 'a_type', _id: '123' } },
+          { index: { _index: 'a_index', _id: '123' } },
           { id: '123', name: 'Bob' },
-          { index: { _index: 'a_index', _type: 'a_type', _id: '124' } },
+          { index: { _index: 'a_index', _id: '124' } },
           { id: '124', name: 'Tom' },
         ],
       });
@@ -353,18 +353,13 @@ describe('buildBulkQuery', () => {
 
   describe('Non primary key based class', () => {
     beforeEach(() => {
-      (getIndexMetadata as Mock).mockReturnValue({ index: 'a_index', type: 'a_type' });
+      (getIndexMetadata as Mock).mockReturnValue({ index: 'a_index' });
     });
 
     it('build index query', () => {
       const query = buildBulkQuery(options, 'index', User, [{ name: 'Bob' }, { name: 'Tom' }]);
       expect(query).toEqual({
-        body: [
-          { index: { _index: 'a_index', _type: 'a_type' } },
-          { name: 'Bob' },
-          { index: { _index: 'a_index', _type: 'a_type' } },
-          { name: 'Tom' },
-        ],
+        body: [{ index: { _index: 'a_index' } }, { name: 'Bob' }, { index: { _index: 'a_index' } }, { name: 'Tom' }],
       });
     });
   });
