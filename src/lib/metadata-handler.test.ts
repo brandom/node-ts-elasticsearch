@@ -7,7 +7,7 @@ class Twitter {
 
 describe('getIndexMetadata', () => {
   it('return index metadata', async () => {
-    const metadata = { index: 'a_index', type: 'a_type', any: 'thing' };
+    const metadata = { index: 'a_index', any: 'thing', dynamic: 'strict' };
     Reflect.getMetadata = jest.fn().mockReturnValue(metadata);
     const result = getIndexMetadata({}, Twitter);
     expect(result).toEqual(metadata);
@@ -16,10 +16,10 @@ describe('getIndexMetadata', () => {
   });
 
   it('return index metadata with index prefix', async () => {
-    const metadata = { index: 'a_index', type: 'a_type', any: 'thing' };
+    const metadata = { index: 'a_index', any: 'thing' };
     Reflect.getMetadata = jest.fn().mockReturnValue(metadata);
     const meta = getIndexMetadata({ indexPrefix: 'es1_' }, Twitter);
-    expect(meta).toEqual({ index: 'es1_a_index', type: 'a_type', any: 'thing' });
+    expect(meta).toEqual({ index: 'es1_a_index', any: 'thing', dynamic: 'strict' });
     expect(Reflect.getMetadata).toHaveBeenCalledWith(DECORATORS.INDEX, Twitter);
     expect(metadata.index).toEqual('a_index'); // check original is not modified
   });
@@ -47,7 +47,7 @@ describe('getPropertiesMetadata', () => {
 });
 
 describe('getId', () => {
-  beforeEach(() => (Reflect.getMetadata = jest.fn().mockReturnValue({ index: 'a_index', type: 'a_type', primary: 'id' })));
+  beforeEach(() => (Reflect.getMetadata = jest.fn().mockReturnValue({ index: 'a_index', primary: 'id' })));
 
   it('extract id from instance', () => {
     const options = { indexPrefix: 'es1_' };
@@ -72,7 +72,7 @@ describe('getId', () => {
   });
 
   it('throw if class is not defined', () => {
-    Reflect.getMetadata = jest.fn().mockReturnValue({ index: 'a_index', type: 'a_type' });
+    Reflect.getMetadata = jest.fn().mockReturnValue({ index: 'a_index' });
     expect(() => getId({}, new Twitter())).toThrow('Primary not defined for class Twitter');
   });
 });

@@ -7,6 +7,7 @@ export interface IndexMetadata {
   index: string;
   primary?: string;
   settings?: any;
+  dynamic?: boolean | 'strict';
 }
 
 /**
@@ -19,7 +20,7 @@ export function getIndexMetadata<T>(coreOptions: ICoreOptions, cls: IndexedClass
   if (!metadata) {
     throw new Error('Index is missing');
   }
-  return { ...metadata, index: `${coreOptions.indexPrefix || ''}${metadata.index}` };
+  return { ...metadata, index: `${coreOptions.indexPrefix || ''}${metadata.index}`, dynamic: metadata.dynamic || 'strict' };
 }
 
 /**
