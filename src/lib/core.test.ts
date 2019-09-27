@@ -411,11 +411,16 @@ describe('search', () => {
     });
   });
 
-  it('returns instances', async () => {
+  it('returns _source by default', async () => {
+    core = new Core(client, { ...coreOptions });
+
     const response: any = deepFreeze({
       body: {
         hits: {
-          hits: [{ _source: { user_id: '123', name: 'Bob', age: 13 } }, { _source: { user_id: '456', name: 'Tom', age: 14 } }],
+          hits: [
+            { _id: 'docid123', _source: { user_id: '123', name: 'Bob', age: 13 } },
+            { _id: 'docid456', _source: { user_id: '456', name: 'Tom', age: 14 } },
+          ],
         },
       },
     });
@@ -424,6 +429,37 @@ describe('search', () => {
     client.search = jest.fn().mockReturnValue(response);
 
     const result = await core.search<User>(User, query);
+
+    expect(result.response).toBe(response);
+    expect(result.documents).toEqual([
+      { _id: 'docid123', user_id: '123', name: 'Bob', age: 13 },
+      { _id: 'docid456', user_id: '456', name: 'Tom', age: 14 },
+    ]);
+    expect(result.documents[0]).toBeInstanceOf(Object);
+    expect(result.documents[1]).toBeInstanceOf(Object);
+    expect(client.search).toHaveBeenCalledTimes(1);
+    expect(client.search).toHaveBeenCalledWith({ index: 'es1_user', ...query });
+    expect(tools.instantiateResult).toHaveBeenCalledTimes(0);
+  });
+
+  it('returns instances when instantiateResult true', async () => {
+    core = new Core(client, { ...coreOptions });
+
+    const response: any = deepFreeze({
+      body: {
+        hits: {
+          hits: [
+            { _id: 'docid123', _source: { user_id: '123', name: 'Bob', age: 13 } },
+            { _id: 'docid123', _source: { user_id: '456', name: 'Tom', age: 14 } },
+          ],
+        },
+      },
+    });
+    const query: any = deepFreeze({ body: { query: { match_all: {} } } });
+
+    client.search = jest.fn().mockReturnValue(response);
+
+    const result = await core.search<User>(User, query, { instantiateResult: true });
 
     expect(result.response).toBe(response);
     expect(result.documents).toEqual([{ age: 13, name: 'Bob', user_id: '123' }, { age: 14, name: 'Tom', user_id: '456' }]);
