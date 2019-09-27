@@ -52,7 +52,7 @@ export class Indices {
     return await this.client.indices.putMapping({
       index: metadata.index,
       body: {
-        dynamic: 'strict',
+        dynamic: metadata.dynamic,
         properties: getPureMapping(fieldsMetadata),
       },
     });

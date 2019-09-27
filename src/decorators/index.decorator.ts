@@ -4,7 +4,7 @@ import { AnyClass } from '../types';
 
 export interface IIndexOptions {
   index?: string;
-  type?: string;
+  dynamic?: boolean | 'strict';
   settings?: any;
 }
 
@@ -23,7 +23,7 @@ export function Index(pathOrOptions?: string | IIndexOptions, indexOptions?: IIn
     const index: string = (typeof pathOrOptions === 'string' ? pathOrOptions : options.index) || target.name;
     const meta = Reflect.getMetadata(DECORATORS.INDEX, target) || {};
 
-    Reflect.defineMetadata(DECORATORS.INDEX, { ...meta, index: index.toLowerCase(), settings: options.settings }, target);
+    Reflect.defineMetadata(DECORATORS.INDEX, { ...meta, index: index.toLowerCase(), settings: options.settings, dynamic: options.dynamic }, target);
     IndexStore.add(target);
     return target;
   };

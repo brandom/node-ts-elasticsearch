@@ -31,7 +31,7 @@ class Twitter {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  (getIndexMetadata as Mock).mockReturnValue({ index: 'a_index', type: 'a_type', settings: { any: 'thing' }, unwanted: 'value' });
+  (getIndexMetadata as Mock).mockReturnValue({ index: 'a_index', settings: { any: 'thing' }, unwanted: 'value', dynamic: 'strict' });
 });
 
 describe('create', () => {
