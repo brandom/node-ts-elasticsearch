@@ -19,6 +19,10 @@ export interface ICoreOptions {
   indexPrefix?: string;
 }
 
+export interface ISearchOptions {
+  instantiateResult?: boolean;
+}
+
 export class Core {
   /**
    * Return all Indexed classes
@@ -213,10 +217,16 @@ export class Core {
    * @param cls
    * @param params
    */
-  async search<T>(cls: IndexedClass<T>, params: IndexedSearchParams): Promise<{ response: ApiResponse<SearchResponse<T>>; documents: T[] }> {
+  async search<T>(
+    cls: IndexedClass<T>,
+    params: IndexedSearchParams,
+    options: ISearchOptions = { instantiateResult: false },
+  ): Promise<{ response: ApiResponse<SearchResponse<T>>; documents: T[] }> {
     const metadata = getIndexMetadata(this.options, cls);
     const response = await this.client.search({ index: metadata.index, ...params });
-    const documents = response.body.hits.hits.map((hit: any) => instantiateResult(cls, hit._source));
+    const documents = options.instantiateResult
+      ? response.body.hits.hits.map((hit: any) => instantiateResult(cls, hit._source))
+      : response.body.hits.hits.map((hit: any) => ({ _id: hit._id, ...hit._source }));
     return { response, documents };
   }
 
