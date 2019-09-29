@@ -1,13 +1,13 @@
 {
-  "name": "@gojob/ts-elasticsearch",
-  "version": "1.3.3",
+  "name": "@brandom/ts-elasticsearch",
+  "version": "1.4.0",
   "license": "MIT",
   "description": "Elasticsearch decorated by TypeScript",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gojob-1337/node-ts-elasticsearch"
+    "url": "git+https://github.com/brandom/node-ts-elasticsearch"
   },
   "keywords": [
     "elasticsearch",

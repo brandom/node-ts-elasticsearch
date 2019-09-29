@@ -1,7 +1,10 @@
-# @gojob/ts-elasticsearch
+# @brandom/ts-elasticsearch
 
-[![travis build](https://img.shields.io/travis/gojob-1337/node-ts-elasticsearch.svg)](https://travis-ci.org/gojob-1337/node-ts-elasticsearch)
-[![Coverage Status](https://coveralls.io/repos/github/gojob-1337/node-ts-elasticsearch/badge.svg?branch=master)](https://coveralls.io/github/gojob-1337/node-ts-elasticsearch?branch=master)
+[![travis build](https://img.shields.io/travis/gojob-1337/node-ts-elasticsearch.svg)](https://travis-ci.org/gojob-1337/node-ts-elasticsearch) [![Coverage Status](https://coveralls.io/repos/github/gojob-1337/node-ts-elasticsearch/badge.svg?branch=master)](https://coveralls.io/github/gojob-1337/node-ts-elasticsearch?branch=master)
+
+## About
+
+Fork of @gojob/ts-elasticsearch to upgrade elasticsearch client and add new features.
 
 ## NPM publish
 
@@ -14,13 +17,13 @@ The purpose of this library is to provide a decorated class approch to use the [
 ## Installation
 
 ```
-yarn add @gojob/ts-elasticsearch
+npm install @brandom/ts-elasticsearch
 ```
 
 ## Usage example
 
 ```typescript
-import { Field, Elasticsearch, Primary } from '@gojob/ts-elasticsearch';
+import { Field, Elasticsearch, Primary } from '@brandom/ts-elasticsearch';
 
 @Index()
 class User {
@@ -49,8 +52,6 @@ await elasticsearch.index(user);
 await elasticsearch.indices.refresh(User);
 
 const { documents } = elasticsearch.search(User, { body: { query: { match_all: {} } } });
-
-
 ```
 
 ## Documentation
@@ -72,11 +73,9 @@ Index settings may be added in the `settings` optional parameter.
 class Tweeter {}
 ```
 
-
 #### decorator `@Primary`
 
-This property decorator factory declares the class primary key which will be used as `_id` in Elasticsearch index.
-When not provided, Elasticsearch generates ids by it own.
+This property decorator factory declares the class primary key which will be used as `_id` in Elasticsearch index. When not provided, Elasticsearch generates ids by it own.
 
 ```typescript
 @Index()
@@ -89,7 +88,6 @@ class User {
   @Field('integer') age: number;
 }
 ```
-
 
 #### decorator `@Field`
 
@@ -108,8 +106,7 @@ class User {
 
 ##### Special case of object or nested (array of object)
 
-When dealing with object or nested, you have to declare a class with some fields declared.
-Notice in this case, the class in not decorated with `@Index`.
+When dealing with object or nested, you have to declare a class with some fields declared. Notice in this case, the class in not decorated with `@Index`.
 
 Object example:
 
@@ -151,14 +148,14 @@ class User {
 
 This class provides main elasticsearch features directly usable with indexed classes.
 
-__The purpose of this library is not to override all official plugin features, but only those that are relevant for managing documents using classes.__
+**The purpose of this library is not to override all official plugin features, but only those that are relevant for managing documents using classes.**
 
 When dealing with documents, you can either uses indexed class instances or literal object associated to their indexed class.
 
 The examples presents in this chapter are based on this setup.
 
 ```typescript
-import { Field, Elasticsearch, Primary } from '@gojob/ts-elasticsearch';
+import { Field, Elasticsearch, Primary } from '@brandom/ts-elasticsearch';
 
 const elasticsearch = new Elasticsearch({ host: 'http://192.168.99.100:9200' });
 
@@ -183,10 +180,10 @@ IConfigOptions extends the official [client configuration option](https://www.el
 
 Extended options provided by IConfigOptions:
 
-|     Name    |                                                    Type                                                   | Optional | Description                     |
-|:-----------:|:---------------------------------------------------------------------------------------------------------:|:--------:|---------------------------------|
-| client      | [elasticsearch.Client](https://github.com/elastic/elasticsearch-js/blob/14.x/docs/configuration.asciidoc) |     X    | Official client instance to use |
-| indexPrefix |                                                   string                                                  |     X    | Prefix to set to all indices    |
+   Name     |                                                   Type                                                    | Optional | Description
+:---------: | :-------------------------------------------------------------------------------------------------------: | :------: | -------------------------------
+  client    | [elasticsearch.Client](https://github.com/elastic/elasticsearch-js/blob/14.x/docs/configuration.asciidoc) |    X     | Official client instance to use
+indexPrefix |                                                  string                                                   |    X     | Prefix to set to all indices
 
 #### Core functions
 
